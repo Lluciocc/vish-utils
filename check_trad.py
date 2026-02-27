@@ -81,7 +81,7 @@ def analyze(template_path, translation_path):
 
     print()
 
-    if missing_keys or empty_keys: # For CI
+    if missing_keys or empty_keys or extra_keys: # For CI
         sys.exit(2)
 
 
