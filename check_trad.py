@@ -81,6 +81,9 @@ def analyze(template_path, translation_path):
 
     print()
 
+    if missing_keys or empty_keys: # For CI
+        sys.exit(2)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Check completeness of a translation JSON file.")
