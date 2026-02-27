@@ -83,6 +83,7 @@ jobs:
             core.setOutput("number", pr.number);
 
       - name: Download JSON from PR
+        id: download
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -93,16 +94,25 @@ jobs:
           path="${FILE_PATH}"
 
           url="https://raw.githubusercontent.com/${owner}/${repo}/${sha}/${path}"
+          echo "Downloading from: $url"
 
-          curl -fL --retry 5 --retry-all-errors \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -o translation_to_check.json \
-            "$url"
+          if ! curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" \
+               -o translation_to_check.json "$url"; then
+            echo "download_failed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "download_failed=false" >> $GITHUB_OUTPUT
 
       - name: Run translation check
         id: check
         shell: bash
         run: |
+          if [ "${{ steps.download.outputs.download_failed }}" = "true" ]; then
+            echo "exit_code=404" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           set +e
           python check_trad.py assets/models/en.json translation_to_check.json > result.txt 2>&1
           EXIT_CODE=$?
@@ -120,16 +130,18 @@ jobs:
             const runUrl = process.env.RUN_URL;
             const exitCode = "${{ steps.check.outputs.exit_code }}";
 
+            let body = "";
             let output = "";
+
             try {
               output = fs.readFileSync("result.txt", "utf8");
             } catch (e) {
-              output = "No output captured.";
+              output = "";
             }
 
-            let body;
-
-            if (exitCode === "0") {
+            if (exitCode === "404") {
+              body = `❌ File not found in this PR: \`${filePath}\`.\n\nMake sure the file exists at this path.\n\n${runUrl}`;
+            } else if (exitCode === "0") {
               body = `✅ Translation check passed for \`${filePath}\`.\n\n${runUrl}`;
             } else if (exitCode === "2") {
               body = `❌ Translation check failed for \`${filePath}\`.\n\n\`\`\`\n${output}\n\`\`\`\n\n${runUrl}`;
