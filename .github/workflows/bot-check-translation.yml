@@ -48,7 +48,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
-              body: `Started translation check for \`${filePath}\`.\n${runUrl}`
+              body: `▶️ Started translation check for \`${filePath}\`.\n${runUrl}`
             });
 
       - name: Checkout base repository
@@ -130,11 +130,11 @@ jobs:
             let body;
 
             if (exitCode === "0") {
-              body = `Translation check passed for \`${filePath}\`.\n\n${runUrl}`;
+              body = `✅ Translation check passed for \`${filePath}\`.\n\n${runUrl}`;
             } else if (exitCode === "2") {
-              body = `Translation check failed for \`${filePath}\`.\n\n\`\`\`\n${output}\n\`\`\`\n\n${runUrl}`;
+              body = `❌ Translation check failed for \`${filePath}\`.\n\n\`\`\`\n${output}\n\`\`\`\n\n${runUrl}`;
             } else {
-              body = `Translation check crashed (exit code ${exitCode}) for \`${filePath}\`.\n\n\`\`\`\n${output}\n\`\`\`\n\n${runUrl}`;
+              body = `‼️ Translation check crashed (exit code ${exitCode}) for \`${filePath}\`.\n\n\`\`\`\n${output}\n\`\`\`\n\n${runUrl}`;
             }
 
             await github.rest.issues.createComment({
